@@ -1,0 +1,7 @@
+geopandas>=1.2
+pyogrio>=0.13
+pandas>=2.3,<3
+numpy>=2.5.3
+matplotlib>=3.11
+caf.viz @ git+https://github.com/Transport-for-the-North/caf.viz.git@fix/static-osm
+marimo>=0.25
