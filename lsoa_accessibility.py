@@ -14,8 +14,12 @@ with app.setup:
 
     from caf.viz import mapping, web
 
-    plt.style.use("caf.viz.tfn")
     DATA_FOLDER = pathlib.Path(r"data/Workshop Data")
+
+    # Use TfN style for matplotlib plots
+    plt.style.use("caf.viz.tfn")
+    # Overwrite default TfN cmap with the reverse to match web maps
+    plt.style.use({"image.cmap": "viridis_r"})
 
 
 @app.cell(hide_code=True)
