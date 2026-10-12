@@ -194,4 +194,4 @@ dmypy.json
 __marimo__
 
 data/
-layouts/
+outputs/
