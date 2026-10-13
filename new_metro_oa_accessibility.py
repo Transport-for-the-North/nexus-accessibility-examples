@@ -33,7 +33,6 @@ with app.setup:
         "Washington South",
     ]
 
-
     CUTOFFS_MINUTES = [15, 30, 45, 60]
 
 
@@ -74,7 +73,7 @@ def _():
     return
 
 
-@app.cell(expand_output=True)
+@app.cell(hide_code=True, expand_output=True)
 def _():
     required_columns = {
         "from_id",
@@ -129,7 +128,7 @@ def _():
     return
 
 
-@app.function
+@app.function(hide_code=True)
 def prepare_accessibility_costs(
     costs: pd.DataFrame,
     stations: list[str],
@@ -214,7 +213,7 @@ def prepare_accessibility_costs(
     return relevant
 
 
-@app.cell(expand_output=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(costs):
     accessibility_costs = prepare_accessibility_costs(
         costs=costs,
@@ -269,7 +268,7 @@ def _():
     return
 
 
-@app.cell(expand_output=True)
+@app.cell(hide_code=True, expand_output=True)
 def _():
     # if not OA_BOUNDARIES_PATH.exists():
     #     raise FileNotFoundError(
@@ -306,7 +305,7 @@ def _():
             oas_web.head(),
         ]
     )
-    return oas, oas_web
+    return (oas_web,)
 
 
 @app.cell(hide_code=True)
@@ -361,71 +360,10 @@ def _(accessibility_costs):
         justify="start",
         gap=1.5,
     )
-
-    return selected_cutoff, selected_direction, selected_mode, selected_station
-
-
-@app.cell
-def create_accessibility_map_data(
-    accessibility_costs,
-    oas,
-    selected_cutoff,
-    selected_direction,
-    selected_mode,
-    selected_station,
-):
-    selected_costs = accessibility_costs.loc[
-        accessibility_costs["station"].eq(selected_station.value)
-        & accessibility_costs["mode"].eq(selected_mode.value)
-        & accessibility_costs["direction"].eq(selected_direction.value),
-        ["oa_id", "travel_time_s", "travel_time_min"],
-    ].copy()
-
-    selected_costs = (
-        selected_costs.sort_values("travel_time_min")
-        .drop_duplicates(
-            subset=["oa_id"],
-            keep="first",
-        )
-        .set_index("oa_id")
-    )
-
-    map_data = oas[["geometry"]].join(
-        selected_costs,
-        how="left",
-        validate="1:1",
-    )
-
-    map_data["station"] = selected_station.value
-    map_data["mode"] = selected_mode.value
-    map_data["direction"] = selected_direction.value
-    map_data["cutoff_minutes"] = selected_cutoff.value
-
-    map_data["within_cutoff"] = (
-        map_data["travel_time_min"].notna()
-        & map_data["travel_time_min"].le(selected_cutoff.value)
-    )
-
-    map_data["accessibility"] = np.select(
-        [
-            map_data["within_cutoff"],
-            map_data["travel_time_min"].notna(),
-        ],
-        [
-            f"Within {selected_cutoff.value} minutes",
-            f"Over {selected_cutoff.value} minutes",
-        ],
-        default="No journey returned",
-    )
-
-    map_data["travel_time_min"] = map_data["travel_time_min"].round(1)
-
-    reachable_count = int(map_data["within_cutoff"].sum())
-    journey_count = int(map_data["travel_time_min"].notna().sum())
-    return
+    return selected_cutoff, selected_station
 
 
-@app.function
+@app.function(hide_code=True)
 def accessibility_map(
     map_data: gpd.GeoDataFrame,
     title: str,
@@ -466,12 +404,7 @@ def _(selected_cutoff, selected_station):
     return
 
 
-@app.cell
-def _():
-    return
-
-
-@app.function
+@app.function(hide_code=True)
 def create_accessibility_map_data(
     accessibility_costs: pd.DataFrame,
     oas: gpd.GeoDataFrame,
@@ -532,7 +465,7 @@ def create_accessibility_map_data(
     return map_data, reachable_count, journey_count
 
 
-@app.cell
+@app.cell(hide_code=True, expand_output=True)
 def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     walk_to_data, walk_to_reachable, walk_to_journeys = (
         create_accessibility_map_data(
@@ -574,7 +507,7 @@ def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     return walk_to_journeys, walk_to_reachable
 
 
-@app.cell
+@app.cell(hide_code=True, expand_output=True)
 def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     walk_from_data, walk_from_reachable, walk_from_journeys = (
         create_accessibility_map_data(
@@ -616,7 +549,7 @@ def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     return walk_from_journeys, walk_from_reachable
 
 
-@app.cell
+@app.cell(hide_code=True, expand_output=True)
 def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     pt_to_data, pt_to_reachable, pt_to_journeys = (
         create_accessibility_map_data(
@@ -660,7 +593,7 @@ def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     return pt_to_journeys, pt_to_reachable
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(accessibility_costs, oas_web, selected_cutoff, selected_station):
     pt_from_data, pt_from_reachable, pt_from_journeys = (
         create_accessibility_map_data(
@@ -716,7 +649,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     pt_from_journeys,
     pt_from_reachable,
