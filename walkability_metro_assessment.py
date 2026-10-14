@@ -350,7 +350,14 @@ def _():
 
 @app.cell
 def _():
-    # Check this reconstructed path against the actual CSV location.
+    # First, define the JT cap (X mins) for our analysis.
+    JT_CAP_MINS = 15
+    return (JT_CAP_MINS,)
+
+
+@app.cell
+def _(JT_CAP_MINS):
+    # Define path to GraphHopper costs.
     costs_path = (
         pathlib.Path(r"Y:\Accessibility\washington-metro-trip-data")
         / "post workshop data"
@@ -364,6 +371,7 @@ def _():
     if not costs_path.exists():
         raise FileNotFoundError(f"Could not find the routed costs file:\n{costs_path}")
 
+    # Read and validate costs data.
     costs = pd.read_csv(costs_path, low_memory=False)
     required_columns = {"from_id", "to_id", "processed_time_s"}
     missing_columns = required_columns - set(costs.columns)
@@ -374,8 +382,8 @@ def _():
         )
 
     print(f"Loaded {len(costs):,} routed costs.")
-    JT_CAP_MINS = 15
 
+    # Format data types.
     costs["processed_time_s"] = pd.to_numeric(
         costs["processed_time_s"], errors="coerce"
     )
@@ -384,6 +392,8 @@ def _():
     ).copy()
     costs["from_id"] = costs["from_id"].astype("string").str.strip()
     costs["to_id"] = costs["to_id"].astype("string").str.strip()
+
+    # Filter costs based on defined JT CAP MINS.
     costs = costs.loc[
         costs["processed_time_s"] <= JT_CAP_MINS * 60
     ].copy()
@@ -392,7 +402,7 @@ def _():
         f"Filtered walking costs to journeys <= {JT_CAP_MINS} minutes."
     )
     print(f"Post-filter costs remaining: {len(costs):,}.")
-    return JT_CAP_MINS, costs
+    return (costs,)
 
 
 @app.cell(hide_code=True)
@@ -425,6 +435,7 @@ def _(
         .tolist()
     )
 
+    # Get accessibile metro stops.
     baseline_costs = costs.loc[
         costs["to_id"].isin(current_station_ids)
     ].drop_duplicates(subset=["from_id", "to_id"])
@@ -480,6 +491,14 @@ def _(
         intervention_access_to_metro,
         intervention_metro_total_access,
     )
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ^ 1,708 unique to_id values did not match station names.<br>That is because the derived GraphHopper costs contain both access (to metro stops) and egress (from metro to origins) costs.<br>This analysis is focused on Access to the metro.
+    """)
+    return
 
 
 @app.cell(hide_code=True)
